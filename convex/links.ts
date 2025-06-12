@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
 interface SaveLinkArgs {
   userId: string;
@@ -82,6 +83,12 @@ export const saveLink = mutation({
         insertData.originalApp = args.originalApp;
 
       const linkId = await ctx.db.insert("links", insertData);
+
+      // メタデータ取得を非同期でトリガー
+      await ctx.scheduler.runAfter(0, api.metadata.fetchAndUpdateMetadata, {
+        linkId,
+        url: args.url,
+      });
 
       return linkId;
     }

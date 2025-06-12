@@ -22,6 +22,7 @@ import RotatingCarousel from "@/components/home/RotatingCarousel";
 import StackedList from "@/components/home/StackedList";
 import { DEFAULT_FILTER_TAGS } from "@/constants/tags";
 import { SavedLink } from "@/types";
+import { parseError, showErrorAlert, isValidUrl } from "@/utils/errorHandling";
 import { BookOpen, Filter, RotateCcw, Target } from "lucide-react-native";
 import Animated, {
   interpolate,
@@ -141,12 +142,19 @@ export default function HomeScreen() {
         await markAsReadMutation({ linkId: link.id as any });
       } catch (error) {
         console.error("Failed to mark as read:", error);
+        const appError = parseError(error);
+        showErrorAlert(appError, "既読にできませんでした");
       }
     }
 
-    Linking.openURL(link.url).catch(() => {
-      Alert.alert("Error", "Could not open the link");
-    });
+    try {
+      await Linking.openURL(link.url);
+    } catch {
+      showErrorAlert(
+        { code: "INVALID_URL", message: "リンクを開けませんでした" },
+        "エラー"
+      );
+    }
   };
 
   const handleLinkLongPressStart = (link: SavedLink) => {
@@ -186,7 +194,8 @@ export default function HomeScreen() {
       await toggleReadStatusMutation({ linkId: id as any });
     } catch (error) {
       console.error("Failed to toggle read status:", error);
-      Alert.alert("Error", "Failed to update link status");
+      const appError = parseError(error);
+      showErrorAlert(appError, "ステータス更新エラー");
     }
   };
 
@@ -195,11 +204,21 @@ export default function HomeScreen() {
       await deleteLinkMutation({ linkId: id as any });
     } catch (error) {
       console.error("Failed to delete link:", error);
-      Alert.alert("Error", "Failed to delete link");
+      const appError = parseError(error);
+      showErrorAlert(appError, "削除エラー");
     }
   };
 
   const handleAddLink = async (url: string, tags: string[]) => {
+    // URLの妥当性チェック
+    if (!isValidUrl(url)) {
+      showErrorAlert(
+        { code: "INVALID_URL", message: "正しいURLを入力してください" },
+        "無効なURL"
+      );
+      return;
+    }
+
     try {
       await saveLinkMutation({
         url,
@@ -209,10 +228,11 @@ export default function HomeScreen() {
         readingTime: 5,
         source: "Manual Input",
       });
-      Alert.alert("Success", "Link added successfully!");
+      Alert.alert("成功", "リンクを保存しました！");
     } catch (error) {
       console.error("Failed to add link:", error);
-      Alert.alert("Error", "Failed to add link");
+      const appError = parseError(error);
+      showErrorAlert(appError, "保存エラー");
     }
   };
 
@@ -230,10 +250,11 @@ export default function HomeScreen() {
         onPress: async () => {
           try {
             await resetAllToUnreadMutation();
-            Alert.alert("Success", "All articles marked as unread");
+            Alert.alert("成功", "すべての記事を未読に戻しました");
           } catch (error) {
             console.error("Failed to reset all to unread:", error);
-            Alert.alert("Error", "Failed to reset reading progress");
+            const appError = parseError(error);
+            showErrorAlert(appError, "リセットエラー");
           }
         },
       },

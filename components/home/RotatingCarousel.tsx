@@ -44,11 +44,9 @@ function CarouselCard({
   cardsScale,
   onPress,
 }: CarouselCardProps) {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const cardHeight = 160;
   const cardSpacing = 60; // 間隔を狭める
   const itemHeight = cardHeight + cardSpacing;
-  const carouselRadius = 120; // 回転半径を小さくする
 
   const animatedCardStyle = useAnimatedStyle(() => {
     const progress = cardsScale.value;
@@ -262,7 +260,7 @@ export default function RotatingCarousel({
         stiffness: 120,
       });
     }
-  }, [visible, links.length]);
+  }, [visible, links.length, backdropOpacity, cardsScale, cardsTranslateY, scrollY]);
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,

@@ -1,4 +1,5 @@
 import { AuthScreen } from "@/components/AuthScreen";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { tokenCache } from "@/utils/cache";
 import {
@@ -46,34 +47,36 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          <QueryClientProvider client={queryClient}>
-            <SafeAreaProvider>
-              <PaperProvider>
-                <ThemeProvider
-                  value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                >
-                  <SignedIn>
-                    <Stack>
-                      <Stack.Screen
-                        name="(tabs)"
-                        options={{ headerShown: false }}
-                      />
-                      <Stack.Screen name="+not-found" />
-                    </Stack>
-                  </SignedIn>
-                  <SignedOut>
-                    <AuthScreen />
-                  </SignedOut>
-                  <StatusBar style="auto" />
-                </ThemeProvider>
-              </PaperProvider>
-            </SafeAreaProvider>
-          </QueryClientProvider>
-        </ConvexProviderWithClerk>
-      </ClerkLoaded>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+            <QueryClientProvider client={queryClient}>
+              <SafeAreaProvider>
+                <PaperProvider>
+                  <ThemeProvider
+                    value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                  >
+                    <SignedIn>
+                      <Stack>
+                        <Stack.Screen
+                          name="(tabs)"
+                          options={{ headerShown: false }}
+                        />
+                        <Stack.Screen name="+not-found" />
+                      </Stack>
+                    </SignedIn>
+                    <SignedOut>
+                      <AuthScreen />
+                    </SignedOut>
+                    <StatusBar style="auto" />
+                  </ThemeProvider>
+                </PaperProvider>
+              </SafeAreaProvider>
+            </QueryClientProvider>
+          </ConvexProviderWithClerk>
+        </ClerkLoaded>
+      </ClerkProvider>
+    </ErrorBoundary>
   );
 }
