@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.kota14.miniappdemo"
     },
     "web": {
       "bundler": "metro",
@@ -33,6 +34,26 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsText": true
+          },
+          "androidIntentFilters": [
+            {
+              "action": "android.intent.action.SEND",
+              "category": ["android.intent.category.DEFAULT"],
+              "data": [
+                {
+                  "mimeType": "text/plain"
+                }
+              ]
+            }
+          ]
         }
       ]
     ],

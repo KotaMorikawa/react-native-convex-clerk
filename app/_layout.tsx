@@ -1,6 +1,18 @@
 import { AuthScreen } from "@/components/AuthScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ShareIntentHandler from "@/components/ShareIntentHandler";
 import { useColorScheme } from "@/hooks/useColorScheme";
+
+// 開発環境でのJSON parse errorを抑制
+if (__DEV__) {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    if (args[0]?.toString().includes('JSON Parse error: Unexpected end of input')) {
+      return; // JSON parse errorは無視
+    }
+    originalConsoleError(...args);
+  };
+}
 import { tokenCache } from "@/utils/cache";
 import {
   ClerkLoaded,
@@ -58,6 +70,7 @@ export default function RootLayout() {
                     value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
                   >
                     <SignedIn>
+                      <ShareIntentHandler />
                       <Stack>
                         <Stack.Screen
                           name="(tabs)"

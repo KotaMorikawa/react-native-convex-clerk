@@ -1,4 +1,4 @@
-import { Link as LinkIcon, Plus, X } from "lucide-react-native";
+import { Link as LinkIcon, X } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   Alert,
@@ -15,7 +15,7 @@ import {
 interface AddLinkModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (url: string, tags: string[]) => void;
+  onSave: (url: string) => void;
 }
 
 export default function AddLinkModal({
@@ -24,19 +24,6 @@ export default function AddLinkModal({
   onSave,
 }: AddLinkModalProps) {
   const [url, setUrl] = useState("");
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
 
   const handleSave = () => {
     if (!url.trim()) {
@@ -44,17 +31,13 @@ export default function AddLinkModal({
       return;
     }
 
-    onSave(url.trim(), tags);
+    onSave(url.trim());
     setUrl("");
-    setTags([]);
-    setTagInput("");
     onClose();
   };
 
   const handleClose = () => {
     setUrl("");
-    setTags([]);
-    setTagInput("");
     onClose();
   };
 
@@ -96,41 +79,6 @@ export default function AddLinkModal({
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tags</Text>
-            <View style={styles.tagInputContainer}>
-              <TextInput
-                style={styles.tagInput}
-                value={tagInput}
-                onChangeText={setTagInput}
-                placeholder="Add a tag"
-                placeholderTextColor="#8E8E93"
-                onSubmitEditing={handleAddTag}
-                returnKeyType="done"
-              />
-              <TouchableOpacity
-                onPress={handleAddTag}
-                style={styles.addTagButton}
-              >
-                <Plus size={20} color="#007AFF" />
-              </TouchableOpacity>
-            </View>
-
-            {tags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {tags.map((tag) => (
-                  <TouchableOpacity
-                    key={tag}
-                    onPress={() => handleRemoveTag(tag)}
-                    style={styles.tag}
-                  >
-                    <Text style={styles.tagText}>{tag}</Text>
-                    <X size={14} color="#007AFF" />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>

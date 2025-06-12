@@ -1,7 +1,7 @@
 import { SavedLink } from "@/types";
-import { Clock, Tag } from "lucide-react-native";
+import { Clock, ExternalLink } from "lucide-react-native";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated from "react-native-reanimated";
 
 interface StackedLinkCardProps {
@@ -49,44 +49,41 @@ export default function StackedLinkCard({
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            {link.thumbnailUrl && (
-              <Image
-                source={{ uri: link.thumbnailUrl }}
-                style={styles.thumbnail}
-              />
-            )}
             <View style={styles.textContent}>
               <Text
                 style={[styles.title, link.isRead && styles.readTitle]}
                 numberOfLines={2}
               >
-                {link.title}
+                {link.title || link.url}
               </Text>
-              <Text style={styles.source} numberOfLines={1}>
-                {link.source || "Web Article"}
-              </Text>
+              <View style={styles.metadata}>
+                {/* 読書時間 */}
+                {link.readingTime && (
+                  <View style={styles.readingTime}>
+                    <Clock size={10} color="#8E8E93" />
+                    <Text style={styles.metadataText}>{link.readingTime}分</Text>
+                  </View>
+                )}
+                
+                {/* ドメイン/サイト名 */}
+                {(link.siteName || link.domain) && (
+                  <View style={styles.domainContainer}>
+                    <ExternalLink size={10} color="#8E8E93" />
+                    <Text style={styles.metadataText}>
+                      {link.siteName || link.domain}
+                    </Text>
+                  </View>
+                )}
+                
+                {/* 共有元プラットフォーム */}
+                {link.sharedFrom && (
+                  <Text style={styles.sharedFrom}>via {link.sharedFrom}</Text>
+                )}
+              </View>
             </View>
           </View>
 
           <View style={styles.footer}>
-            <View style={styles.metadata}>
-              {link.readingTime && (
-                <View style={styles.readingTime}>
-                  <Clock size={10} color="#8E8E93" />
-                  <Text style={styles.metadataText}>{link.readingTime}min</Text>
-                </View>
-              )}
-
-              {link.tags.length > 0 && (
-                <View style={styles.tags}>
-                  <Tag size={10} color="#8E8E93" />
-                  <Text style={styles.metadataText} numberOfLines={1}>
-                    {link.tags[0]}
-                  </Text>
-                </View>
-              )}
-            </View>
-
             <Text style={styles.date}>
               {link.createdAt.toLocaleDateString("ja-JP", {
                 month: "short",
@@ -166,11 +163,23 @@ const styles = StyleSheet.create({
   metadata: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 4,
+    flexWrap: "wrap",
   },
   readingTime: {
     flexDirection: "row",
     alignItems: "center",
     marginRight: 12,
+  },
+  domainContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  sharedFrom: {
+    fontSize: 10,
+    color: "#007AFF",
+    fontWeight: "500",
   },
   tags: {
     flexDirection: "row",

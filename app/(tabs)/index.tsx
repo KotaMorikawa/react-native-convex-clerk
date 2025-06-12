@@ -16,11 +16,9 @@ import {
 } from "react-native-safe-area-context";
 
 import AddLinkModal from "@/components/AddLinkModal";
-import TagFilter from "@/components/TagFilter";
 import ReadLinksList from "@/components/home/ReadLinksList";
 import RotatingCarousel from "@/components/home/RotatingCarousel";
 import StackedList from "@/components/home/StackedList";
-import { DEFAULT_FILTER_TAGS } from "@/constants/tags";
 import { SavedLink } from "@/types";
 import { parseError, showErrorAlert, isValidUrl } from "@/utils/errorHandling";
 import { BookOpen, Filter, RotateCcw, Target } from "lucide-react-native";
@@ -37,10 +35,12 @@ export default function HomeScreen() {
   // Convexからユーザーのリンクデータを取得
   const linksData = useQuery(api.links.getUserLinks);
   const saveLinkMutation = useMutation(api.links.saveLink);
+  const saveLinkWithMetadataMutation = useMutation(api.links.saveLinkWithMetadata);
   const toggleReadStatusMutation = useMutation(api.links.toggleReadStatus);
   const deleteLinkMutation = useMutation(api.links.deleteLink);
   const markAsReadMutation = useMutation(api.links.markAsRead);
   const resetAllToUnreadMutation = useMutation(api.links.resetAllToUnread);
+  const migrateAllLinksMetadataMutation = useMutation(api.links.migrateAllLinksMetadata);
 
   // Convexのデータ形式をSavedLink型に変換
   const links: SavedLink[] = useMemo(() => {
@@ -48,28 +48,29 @@ export default function HomeScreen() {
 
     return linksData.map((link) => ({
       id: link._id,
-      title: link.title || "Untitled",
+      title: link.title,
       url: link.url,
-      description: link.description || "",
-      tags: link.tags || [],
+      description: link.description,
+      thumbnail: link.thumbnail || link.thumbnailUrl, // 既存データとの互換性
+      domain: link.domain,
+      siteName: link.siteName,
+      readingTime: link.readingTime,
+      tags: link.tags,
       isRead: link.isRead || false,
-      readingTime: link.readingTime || 5,
-      source: link.source || "Manual Input",
       createdAt: new Date(link.createdAt),
       updatedAt: new Date(link.updatedAt),
-      thumbnailUrl: link.thumbnailUrl,
-      summary: link.summary,
       originalApp: link.originalApp,
+      sharedFrom: link.sharedFrom,
     }));
   }, [linksData]);
 
   const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"unread" | "read">("unread");
   const [fanExpandedLinks, setFanExpandedLinks] = useState<SavedLink[]>([]);
   const [showFanExpanded, setShowFanExpanded] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const scrollY = useSharedValue(0);
 
@@ -86,12 +87,23 @@ export default function HomeScreen() {
     // タグによるフィルタリング
     if (selectedTags.length > 0) {
       filtered = filtered.filter((link) =>
-        selectedTags.some((tag) => link.tags.includes(tag))
+        link.tags?.some((tag) => selectedTags.includes(tag))
       );
     }
 
     return filtered;
-  }, [links, selectedTags, activeTab]);
+  }, [links, activeTab, selectedTags]);
+
+  // 全タグのリストを取得
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    links.forEach((link) => {
+      if (link.tags) {
+        link.tags.forEach((tag) => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [links]);
 
   const totalUnreadCount = links.filter((link) => !link.isRead).length;
   const totalReadCount = links.filter((link) => link.isRead).length;
@@ -209,7 +221,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleAddLink = async (url: string, tags: string[]) => {
+  const handleAddLink = async (url: string) => {
     // URLの妥当性チェック
     if (!isValidUrl(url)) {
       showErrorAlert(
@@ -220,13 +232,9 @@ export default function HomeScreen() {
     }
 
     try {
-      await saveLinkMutation({
+      await saveLinkWithMetadataMutation({
         url,
-        title: "Loading...",
-        description: "Fetching content...",
-        tags,
-        readingTime: 5,
-        source: "Manual Input",
+        originalApp: "Manual Input",
       });
       Alert.alert("成功", "リンクを保存しました！");
     } catch (error) {
@@ -236,11 +244,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
 
   const resetAllToUnread = () => {
     Alert.alert("Reset Reading Progress", "Mark all articles as unread?", [
@@ -259,6 +262,29 @@ export default function HomeScreen() {
         },
       },
     ]);
+  };
+
+  const migrateMetadata = async () => {
+    Alert.alert(
+      "メタデータ更新",
+      "既存のリンクにメタデータ（読書時間、ドメイン、共有元）を追加しますか？",
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "更新",
+          onPress: async () => {
+            try {
+              const result = await migrateAllLinksMetadataMutation();
+              Alert.alert("成功", result.message);
+            } catch (error) {
+              console.error("Failed to migrate metadata:", error);
+              const appError = parseError(error);
+              showErrorAlert(appError, "移行エラー");
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -320,6 +346,13 @@ export default function HomeScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={migrateMetadata}
+                  >
+                    <Target size={16} color="#007AFF" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     style={[
                       styles.iconButton,
                       showFilters && styles.activeIconButton,
@@ -349,6 +382,48 @@ export default function HomeScreen() {
                 </Text>
               </View>
 
+              {/* Tag Filters */}
+              {showFilters && allTags.length > 0 && (
+                <View style={styles.filtersSection}>
+                  <Text style={styles.filterTitle}>タグでフィルター</Text>
+                  <View style={styles.tagFilters}>
+                    {allTags.map((tag) => (
+                      <TouchableOpacity
+                        key={tag}
+                        style={[
+                          styles.tagFilter,
+                          selectedTags.includes(tag) && styles.activeTagFilter,
+                        ]}
+                        onPress={() =>
+                          setSelectedTags((prev) =>
+                            prev.includes(tag)
+                              ? prev.filter((t) => t !== tag)
+                              : [...prev, tag]
+                          )
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.tagFilterText,
+                            selectedTags.includes(tag) && styles.activeTagFilterText,
+                          ]}
+                        >
+                          #{tag}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {selectedTags.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.clearFiltersButton}
+                      onPress={() => setSelectedTags([])}
+                    >
+                      <Text style={styles.clearFiltersText}>フィルターをクリア</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
               {/* Stack Visualization */}
               <View style={styles.stackVisualization}>
                 <View style={styles.stackBars}>
@@ -377,16 +452,6 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Filters */}
-            {showFilters && (
-              <View style={styles.filtersSection}>
-                <TagFilter
-                  tags={DEFAULT_FILTER_TAGS}
-                  selectedTags={selectedTags}
-                  onTagToggle={handleTagToggle}
-                />
-              </View>
-            )}
           </Animated.View>
         )}
 
@@ -639,8 +704,46 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: "#F2F2F7",
-    marginTop: 8,
+    marginTop: 16,
     paddingTop: 16,
+  },
+  filterTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1C1C1E",
+    marginBottom: 12,
+  },
+  tagFilters: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 12,
+  },
+  tagFilter: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  activeTagFilter: {
+    backgroundColor: "#007AFF",
+  },
+  tagFilterText: {
+    fontSize: 12,
+    color: "#6D6D80",
+    fontWeight: "500",
+  },
+  activeTagFilterText: {
+    color: "#FFFFFF",
+  },
+  clearFiltersButton: {
+    alignSelf: "flex-start",
+  },
+  clearFiltersText: {
+    fontSize: 12,
+    color: "#007AFF",
+    fontWeight: "500",
   },
   stackContainer: {
     paddingTop: 20,
