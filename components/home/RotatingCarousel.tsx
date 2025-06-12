@@ -34,6 +34,8 @@ interface CarouselCardProps {
   scrollY: Animated.SharedValue<number>;
   cardsScale: Animated.SharedValue<number>;
   onPress: () => void;
+  onBackgroundPress: () => void;
+  currentIndex: number;
 }
 
 function CarouselCard({
@@ -43,6 +45,8 @@ function CarouselCard({
   scrollY,
   cardsScale,
   onPress,
+  onBackgroundPress,
+  currentIndex,
 }: CarouselCardProps) {
   const cardHeight = 160;
   const cardSpacing = 60; // 間隔を狭める
@@ -238,10 +242,19 @@ function CarouselCard({
     };
   });
 
+  const handleCardPress = () => {
+    // 選択中のカードのみリンク遷移、それ以外は背景タップと同じ動作
+    if (index === currentIndex) {
+      onPress();
+    } else {
+      onBackgroundPress();
+    }
+  };
+
   return (
     <Animated.View style={[styles.carouselCard, animatedCardStyle]}>
       <Animated.View style={[styles.cardContainer, cardBackgroundStyle]}>
-        <TouchableOpacity onPress={onPress} style={styles.cardTouchable}>
+        <TouchableOpacity onPress={handleCardPress} style={styles.cardTouchable}>
           <View style={styles.cardContent}>
             <View style={styles.header}>
               <View style={styles.textContent}>
@@ -479,6 +492,8 @@ export default function RotatingCarousel({
                     scrollY={scrollY}
                     cardsScale={cardsScale}
                     onPress={() => handleCardPress(link)}
+                    onBackgroundPress={handleBackdropPress}
+                    currentIndex={currentIndex}
                   />
                 ))}
               </TouchableOpacity>
