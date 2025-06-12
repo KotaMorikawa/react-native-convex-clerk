@@ -15,18 +15,23 @@ export default defineSchema({
     url: v.string(),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
-    thumbnailUrl: v.optional(v.string()),
-    tags: v.optional(v.array(v.string())),
-    summary: v.optional(v.string()),
-    isRead: v.optional(v.boolean()),
+    thumbnail: v.optional(v.string()),
+    thumbnailUrl: v.optional(v.string()), // 既存データとの互換性
+    source: v.optional(v.string()), // 既存データとの互換性
+    domain: v.optional(v.string()),
+    siteName: v.optional(v.string()),
     readingTime: v.optional(v.number()),
-    source: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    isRead: v.optional(v.boolean()),
+    originalApp: v.optional(v.string()),
+    sharedFrom: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-    originalApp: v.optional(v.string()), // 元のアプリ名（Instagram, Twitter等）
   })
     .index("by_user", ["userId"])
     .index("by_user_created", ["userId", "createdAt"])
     .index("by_url", ["url"])
-    .index("by_user_url", ["userId", "url"]),
+    .index("by_user_url", ["userId", "url"])
+    .index("by_user_tags", ["userId", "tags"])
+    .index("by_user_domain", ["userId", "domain"]),
 });

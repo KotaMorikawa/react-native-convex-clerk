@@ -21,8 +21,15 @@ export default function LinkCard({
       onLongPress={onLongPress}
       activeOpacity={0.7}
     >
-      {link.thumbnailUrl && (
-        <Image source={{ uri: link.thumbnailUrl }} style={styles.thumbnail} />
+      {/* サムネイル画像 */}
+      {link.thumbnail && (
+        <View style={styles.thumbnailContainer}>
+          <Image
+            source={{ uri: link.thumbnail }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        </View>
       )}
 
       <View style={styles.content}>
@@ -30,11 +37,22 @@ export default function LinkCard({
           style={[styles.title, link.isRead && styles.readTitle]}
           numberOfLines={2}
         >
-          {link.title}
+          {link.title || link.url}
         </Text>
+
+        {/* 記事の概要 */}
+        {link.description && (
+          <Text
+            style={[styles.description, link.isRead && styles.readDescription]}
+            numberOfLines={2}
+          >
+            {link.description}
+          </Text>
+        )}
 
         <View style={styles.metadata}>
           <View style={styles.metadataRow}>
+            {/* 読書時間 */}
             {link.readingTime && (
               <View style={styles.readingTime}>
                 <Clock size={10} color="#8E8E93" />
@@ -42,10 +60,20 @@ export default function LinkCard({
               </View>
             )}
 
-            {link.source && (
+            {/* ドメイン/サイト名 */}
+            {(link.siteName || link.domain) && (
               <View style={styles.source}>
                 <ExternalLink size={10} color="#8E8E93" />
-                <Text style={styles.sourceText}>{link.source}</Text>
+                <Text style={styles.sourceText}>
+                  {link.siteName || link.domain}
+                </Text>
+              </View>
+            )}
+
+            {/* 共有元プラットフォーム */}
+            {link.sharedFrom && (
+              <View style={styles.platform}>
+                <Text style={styles.platformText}>via {link.sharedFrom}</Text>
               </View>
             )}
 
@@ -57,11 +85,17 @@ export default function LinkCard({
             </Text>
           </View>
 
-          {link.tags.length > 0 && (
-            <View style={styles.tags}>
-              <Text style={styles.tagsText} numberOfLines={1}>
-                {link.tags.slice(0, 2).join(", ")}
-              </Text>
+          {/* タグ表示 */}
+          {link.tags && link.tags.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {link.tags.slice(0, 3).map((tag, index) => (
+                <View key={index} style={styles.tag}>
+                  <Text style={styles.tagText}>#{tag}</Text>
+                </View>
+              ))}
+              {link.tags.length > 3 && (
+                <Text style={styles.moreTagsText}>+{link.tags.length - 3}</Text>
+              )}
             </View>
           )}
         </View>
@@ -92,10 +126,19 @@ const styles = StyleSheet.create({
   readContainer: {
     opacity: 0.8,
   },
-  thumbnail: {
-    width: 60,
-    height: 60,
+  thumbnailContainer: {
+    width: 80,
+    height: 80,
     backgroundColor: "#F2F2F7",
+    borderRadius: 8,
+    overflow: "hidden",
+    marginRight: 12,
+    alignSelf: "flex-start",
+    marginTop: 8,
+  },
+  thumbnail: {
+    width: "100%",
+    height: "100%",
   },
   content: {
     flex: 1,
@@ -106,10 +149,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#1C1C1E",
-    marginBottom: 6,
+    marginBottom: 4,
     lineHeight: 18,
   },
   readTitle: {
+    color: "#8E8E93",
+  },
+  description: {
+    fontSize: 12,
+    color: "#6D6D80",
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  readDescription: {
     color: "#8E8E93",
   },
   metadata: {
@@ -118,12 +170,14 @@ const styles = StyleSheet.create({
   metadataRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 2,
+    marginBottom: 6,
+    flexWrap: "wrap",
   },
   readingTime: {
     flexDirection: "row",
     alignItems: "center",
     marginRight: 12,
+    marginBottom: 2,
   },
   readingTimeText: {
     fontSize: 10,
@@ -134,20 +188,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginRight: 12,
+    marginBottom: 2,
   },
   sourceText: {
     fontSize: 10,
     color: "#8E8E93",
     marginLeft: 2,
   },
-  tags: {
+  platform: {
+    marginRight: 12,
+    marginBottom: 2,
+  },
+  platformText: {
+    fontSize: 9,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  tagsContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 4,
+    flexWrap: "wrap",
   },
-  tagsText: {
-    fontSize: 10,
+  tag: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 4,
+    marginBottom: 2,
+  },
+  tagText: {
+    fontSize: 9,
+    color: "#6D6D80",
+    fontWeight: "500",
+  },
+  moreTagsText: {
+    fontSize: 9,
     color: "#8E8E93",
-    flex: 1,
+    fontWeight: "500",
   },
   date: {
     fontSize: 10,

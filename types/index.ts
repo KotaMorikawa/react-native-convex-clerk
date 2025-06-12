@@ -1,17 +1,18 @@
 export interface SavedLink {
   id: string;
   url: string;
-  title: string;
+  title?: string;
   description?: string;
-  thumbnailUrl?: string;
-  tags: string[];
+  thumbnail?: string;
+  domain?: string;
+  siteName?: string;
+  readingTime?: number;
+  tags?: string[];
   createdAt: Date;
   updatedAt: Date;
-  isRead: boolean;
-  readingTime?: number;
-  source?: string;
-  summary?: string;
+  isRead?: boolean;
   originalApp?: string;
+  sharedFrom?: string;
 }
 
 export interface User {

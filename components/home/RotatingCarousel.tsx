@@ -50,37 +50,6 @@ function CarouselCard({
 
   const animatedCardStyle = useAnimatedStyle(() => {
     const progress = cardsScale.value;
-    // 動的なinputRange（リストの境界を考慮、特に最初と最後のカード）
-    let inputRange: number[];
-
-    if (index === 0) {
-      // 最初のカードの特別処理
-      inputRange = [
-        -itemHeight, // 仮想の前のカード位置
-        0, // 現在のカード位置
-        itemHeight, // 次のカード位置
-        Math.min((totalCards - 1) * itemHeight, 2 * itemHeight),
-        Math.min((totalCards - 1) * itemHeight, 3 * itemHeight),
-      ];
-    } else if (index === totalCards - 1) {
-      // 最後のカードの特別処理
-      inputRange = [
-        Math.max(0, (index - 2) * itemHeight),
-        Math.max(0, (index - 1) * itemHeight),
-        index * itemHeight,
-        (totalCards - 1) * itemHeight + itemHeight, // 仮想の次のカード位置
-        (totalCards - 1) * itemHeight + 2 * itemHeight, // 仮想の次々のカード位置
-      ];
-    } else {
-      // 中間のカードの通常処理
-      inputRange = [
-        (index - 2) * itemHeight,
-        (index - 1) * itemHeight,
-        index * itemHeight,
-        (index + 1) * itemHeight,
-        (index + 2) * itemHeight,
-      ];
-    }
 
     // 縦向きカルーセルの配置（シンプルな縦列配置）
     const baseTranslateY =
@@ -203,10 +172,10 @@ function CarouselCard({
         <TouchableOpacity onPress={onPress} style={styles.cardTouchable}>
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle} numberOfLines={2}>
-              {link.title}
+              {link.title || link.url}
             </Text>
             <Text style={styles.cardSource}>
-              {link.source || "Web Article"}
+              {link.originalApp || "Web Article"}
             </Text>
           </View>
         </TouchableOpacity>
