@@ -88,7 +88,7 @@ function CarouselCard({
     const opacity = interpolate(
       distanceFromCenter,
       [0, itemHeight, 2 * itemHeight],
-      [1.0, 0.7, 0.4],
+      [1.0, 0.5, 0.3], // より強い透明度差
       "clamp"
     );
 
@@ -147,14 +147,25 @@ function CarouselCard({
       "rgba(255, 255, 255, 0.7)",
     ]);
 
-    const borderColor = "rgba(224, 224, 224, 0.3)"; // 統一された薄いボーダー
+    // 選択中のカードには青い境界線、それ以外は薄いグレー
+    const borderColor = interpolateColor(scrollY.value, inputRange, [
+      "rgba(224, 224, 224, 0.3)",
+      "#007AFF", // 選択中は青い境界線
+      "rgba(224, 224, 224, 0.3)",
+    ]);
 
-    const borderWidth = 1; // 統一されたボーダー幅
+    // 選択中のカードの境界線を太くする
+    const borderWidth = interpolate(
+      scrollY.value,
+      inputRange,
+      [1, 3, 1], // 選択中は3px、その他は1px
+      "clamp"
+    );
 
     const shadowOpacity = interpolate(
       scrollY.value,
       inputRange,
-      [0.05, 0.3, 0.05],
+      [0.05, 0.4, 0.05], // 選択中の影を強く
       "clamp"
     );
 
@@ -166,19 +177,128 @@ function CarouselCard({
     };
   });
 
+  // テキスト色のアニメーション（選択中は黒、非選択中はグレー）
+  const titleColorStyle = useAnimatedStyle(() => {
+    let inputRange: number[];
+
+    if (index === 0) {
+      inputRange = [-itemHeight, 0, itemHeight];
+    } else if (index === totalCards - 1) {
+      inputRange = [
+        (index - 1) * itemHeight,
+        index * itemHeight,
+        (totalCards - 1) * itemHeight + itemHeight,
+      ];
+    } else {
+      inputRange = [
+        (index - 1) * itemHeight,
+        index * itemHeight,
+        (index + 1) * itemHeight,
+      ];
+    }
+
+    const color = interpolateColor(scrollY.value, inputRange, [
+      "#8E8E93", // 非選択時はグレー
+      "#1C1C1E", // 選択中は黒
+      "#8E8E93", // 非選択時はグレー
+    ]);
+
+    return {
+      color,
+    };
+  });
+
+  const sourceColorStyle = useAnimatedStyle(() => {
+    let inputRange: number[];
+
+    if (index === 0) {
+      inputRange = [-itemHeight, 0, itemHeight];
+    } else if (index === totalCards - 1) {
+      inputRange = [
+        (index - 1) * itemHeight,
+        index * itemHeight,
+        (totalCards - 1) * itemHeight + itemHeight,
+      ];
+    } else {
+      inputRange = [
+        (index - 1) * itemHeight,
+        index * itemHeight,
+        (index + 1) * itemHeight,
+      ];
+    }
+
+    const color = interpolateColor(scrollY.value, inputRange, [
+      "#C7C7CC", // 非選択時はより薄いグレー
+      "#8E8E93", // 選択中は通常のグレー
+      "#C7C7CC", // 非選択時はより薄いグレー
+    ]);
+
+    return {
+      color,
+    };
+  });
+
   return (
     <Animated.View style={[styles.carouselCard, animatedCardStyle]}>
       <Animated.View style={[styles.cardContainer, cardBackgroundStyle]}>
         <TouchableOpacity onPress={onPress} style={styles.cardTouchable}>
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle} numberOfLines={2}>
-              {link.title || link.url}
-            </Text>
-            <Text style={styles.cardSource}>
-              {link.originalApp || "Web Article"}
-            </Text>
+            <View style={styles.header}>
+              <View style={styles.textContent}>
+                <Animated.Text 
+                  style={[
+                    styles.cardTitle, 
+                    titleColorStyle
+                  ]} 
+                  numberOfLines={2}
+                >
+                  {link.title || link.url}
+                </Animated.Text>
+                <View style={styles.metadata}>
+                  {/* 読書時間 */}
+                  {link.readingTime && (
+                    <View style={styles.readingTime}>
+                      <Text style={styles.metadataText}>{link.readingTime}分</Text>
+                    </View>
+                  )}
+                  
+                  {/* ドメイン/サイト名 */}
+                  {(link.siteName || link.domain) && (
+                    <View style={styles.domainContainer}>
+                      <Text style={styles.metadataText}>
+                        {link.siteName || link.domain}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {/* 共有元プラットフォーム */}
+                  {link.sharedFrom && (
+                    <Text style={styles.sharedFrom}>via {link.sharedFrom}</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.date}>
+                {link.createdAt.toLocaleDateString("ja-JP", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </Text>
+              <Animated.Text 
+                style={[
+                  styles.cardSource, 
+                  sourceColorStyle
+                ]}
+              >
+                {link.originalApp || "Web Article"}
+              </Animated.Text>
+            </View>
           </View>
         </TouchableOpacity>
+
+        {link.isRead && <View style={styles.readIndicator} />}
       </Animated.View>
     </Animated.View>
   );
@@ -217,8 +337,8 @@ export default function RotatingCarousel({
       cardsTranslateY.value = withSpring(0, { damping: 20, stiffness: 120 });
       // 最新のカード（0番目）から開始
       scrollY.value = withSpring(0, {
-        damping: 25, // より高いダンピングでゆっくりに
-        stiffness: 80, // より低いスティフネスでゆっくりに
+        damping: 120, // より高いダンピングでゆっくりに
+        stiffness: 12, // より低いスティフネスでゆっくりに
       });
     } else {
       // 収束アニメーション
@@ -261,7 +381,7 @@ export default function RotatingCarousel({
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       "worklet";
-      const newScrollY = scrollY.value - event.translationY * 0.8;
+      const newScrollY = scrollY.value - event.translationY * 0.1;
       const maxScroll = (links.length - 1) * itemHeight;
 
       // スクロール範囲を制限
@@ -283,8 +403,8 @@ export default function RotatingCarousel({
       const clampedIndex = Math.max(0, Math.min(targetIndex, links.length - 1));
 
       scrollY.value = withSpring(clampedIndex * itemHeight, {
-        damping: 25, // より高いダンピングでゆっくりに
-        stiffness: 80, // より低いスティフネスでゆっくりに
+        damping: 120, // より高いダンピングでゆっくりに
+        stiffness: 12, // より低いスティフネスでゆっくりに
       });
 
       // 最終位置に到達時も振動（重複を避けるため異なるインデックスの場合のみ）
@@ -318,65 +438,87 @@ export default function RotatingCarousel({
         </Animated.View>
 
         {/* カード展開エリア */}
-        <GestureDetector gesture={panGesture}>
-          <Animated.View style={[styles.container, containerStyle]}>
-            {/* ヘッダー */}
-            <View style={styles.header}>
-              <View style={styles.headerContent}>
-                <Text style={styles.headerTitle}>
-                  カードを選択 ({currentIndex + 1}/{links.length})
-                </Text>
-                <Text style={styles.headerSubtitle}>
-                  上下にスワイプしてカードを選択
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <X size={20} color="#FFFFFF" />
+        <TouchableOpacity 
+          style={styles.containerWrapper} 
+          onPress={handleBackdropPress}
+          activeOpacity={1}
+        >
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.container, containerStyle]}>
+              {/* ヘッダー */}
+              <TouchableOpacity 
+                style={styles.header}
+                onPress={(e) => e.stopPropagation()}
+                activeOpacity={1}
+              >
+                <View style={styles.headerContent}>
+                  <Text style={styles.headerTitle}>
+                    カードを選択 ({currentIndex + 1}/{links.length})
+                  </Text>
+                  <Text style={styles.headerSubtitle}>
+                    上下にスワイプしてカードを選択
+                  </Text>
+                </View>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <X size={20} color="#FFFFFF" />
+                </TouchableOpacity>
               </TouchableOpacity>
-            </View>
 
-            {/* カルーセルエリア */}
-            <View style={styles.carouselContainer}>
-              {links.map((link, index) => (
-                <CarouselCard
-                  key={link.id}
-                  link={link}
-                  index={index}
-                  totalCards={links.length}
-                  scrollY={scrollY}
-                  cardsScale={cardsScale}
-                  onPress={() => handleCardPress(link)}
-                />
-              ))}
-            </View>
+              {/* カルーセルエリア */}
+              <TouchableOpacity 
+                style={styles.carouselContainer}
+                onPress={(e) => e.stopPropagation()}
+                activeOpacity={1}
+              >
+                {links.map((link, index) => (
+                  <CarouselCard
+                    key={link.id}
+                    link={link}
+                    index={index}
+                    totalCards={links.length}
+                    scrollY={scrollY}
+                    cardsScale={cardsScale}
+                    onPress={() => handleCardPress(link)}
+                  />
+                ))}
+              </TouchableOpacity>
 
-            {/* インジケーター */}
-            <View style={styles.indicators}>
-              {links.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    {
-                      backgroundColor:
-                        index === currentIndex
-                          ? "rgba(255, 255, 255, 0.9)"
-                          : "rgba(255, 255, 255, 0.3)",
-                      height: index === currentIndex ? 20 : 8,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
+              {/* インジケーター */}
+              <TouchableOpacity 
+                style={styles.indicators}
+                onPress={(e) => e.stopPropagation()}
+                activeOpacity={1}
+              >
+                {links.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.indicator,
+                      {
+                        backgroundColor:
+                          index === currentIndex
+                            ? "rgba(255, 255, 255, 0.9)"
+                            : "rgba(255, 255, 255, 0.3)",
+                        height: index === currentIndex ? 20 : 8,
+                      },
+                    ]}
+                  />
+                ))}
+              </TouchableOpacity>
 
-            {/* フッター */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                3D回転カルーセルでカードを選択
-              </Text>
-            </View>
-          </Animated.View>
-        </GestureDetector>
+              {/* フッター */}
+              <TouchableOpacity 
+                style={styles.footerContainer}
+                onPress={(e) => e.stopPropagation()}
+                activeOpacity={1}
+              >
+                <Text style={styles.footerText}>
+                  3D回転カルーセルでカードを選択
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </GestureDetector>
+        </TouchableOpacity>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -387,8 +529,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
-  container: {
+  containerWrapper: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -452,9 +598,55 @@ const styles = StyleSheet.create({
     height: 160,
   },
   cardContent: {
-    padding: 20,
+    padding: 16,
     height: 160,
     justifyContent: "space-between",
+  },
+  header: {
+    flexDirection: "row",
+    marginBottom: 12,
+  },
+  textContent: {
+    flex: 1,
+  },
+  metadata: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    flexWrap: "wrap",
+  },
+  readingTime: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  domainContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  metadataText: {
+    fontSize: 11,
+    color: "#8E8E93",
+  },
+  sharedFrom: {
+    fontSize: 10,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  date: {
+    fontSize: 11,
+    color: "#8E8E93",
+    fontWeight: "500",
+  },
+  readIndicator: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#34C759",
   },
   cardTitle: {
     fontSize: 18,
@@ -485,6 +677,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  footerContainer: {
     marginTop: 24,
     paddingHorizontal: 20,
   },

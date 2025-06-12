@@ -177,28 +177,11 @@ export default function HomeScreen() {
     );
 
     if (sameDateLinks.length > 1) {
-      // 複数のカードがある場合は手札展開
+      // 複数のカードがある場合のみ手札展開
       setFanExpandedLinks(sameDateLinks);
       setShowFanExpanded(true);
-    } else {
-      // 単独カードの場合は従来のオプション表示
-      Alert.alert(
-        "Link Options",
-        `What would you like to do with "${link.title}"?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: link.isRead ? "Mark as Unread" : "Mark as Read",
-            onPress: () => toggleReadStatus(link.id),
-          },
-          {
-            text: "Delete",
-            style: "destructive",
-            onPress: () => deleteLink(link.id),
-          },
-        ]
-      );
     }
+    // 単独カードの場合は何もしない
   };
 
   const toggleReadStatus = async (id: string) => {
