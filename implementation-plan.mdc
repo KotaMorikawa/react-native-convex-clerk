@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 後で読むリストアプリ 実装プラン
+
+## 第1段階: 基礎セットアップとAuthentication
+1. ✅ プロジェクト構造確認完了
+2. ✅ Convexスキーマ設計と実装 - Done
+   - linksテーブルを追加、flash-memoと同様の構造で実装
+   - ユーザーIDとURLのunique indexを設定し重複防止を実装
+3. Clerk認証設定確認と調整
+4. ✅ 基本的なUIコンポーネント作成 - Done
+   - flash-memo風のUI実装（モックデータ使用）
+   - 未読/既読タブシステム実装
+   - プログレスバーとスタック可視化
+   - Add LinkボタンとAlert.prompt実装
+
+## 第2段階: Convexバックエンド実装
+1. ✅ 基本スキーマ確認済み（links table）
+2. ✅ Convex Functions実装 - Done
+   - saveLink (mutation) - URLの重複チェックと更新/新規作成ロジック実装
+   - getUserLinks (query) - ユーザーの全リンク取得
+   - markAsRead (mutation) - 既読状態への変更
+   - toggleReadStatus (mutation) - 既読/未読状態の切り替え
+   - deleteLink (mutation) - リンクの削除
+   - seedData (mutation) - 初期テストデータ投入機能
+
+## 第3段階: UI実装（flash-memoスタイル）
+1. ✅ HomeScreen UI実装 - Done (Basic version)
+   - Stack visualization
+   - Progress tracking
+   - Tab system (未読/既読)
+2. LinkCardコンポーネント実装
+3. StackedListコンポーネント実装
+4. ReadLinksListコンポーネント実装
+
+## 第4段階: Convex統合とリアルデータ
+1. ConvexデータとUI統合
+2. リアルタイム更新機能
+3. エラーハンドリング
+
+## 第5段階: メタデータ取得機能
+1. Link preview API実装
+2. LLM要約機能実装（Edge Runtime）
+3. OG画像取得機能
+
+## 第6段階: Share Extension実装
+1. react-native-share-extension設定
+2. Share Extensionネイティブモジュール実装
+3. URLの正規化機能
+
+## 第7段階: オフライン対応
+1. SQLite caching実装
+2. Optimistic updates実装
+3. Offline mutation queue
+
+## 第8段階: iOS App Intent実装
+1. ネイティブモジュール作成
+2. Action Button対応
+3. Siri Shortcuts対応
+
+## 第9段階: テスト＆パフォーマンス
+1. Jest/RTL単体テスト実装
+2. Detox E2Eテスト
+3. パフォーマンス最適化
+
+## 第10段階: 最終調整＆デプロイ
+1. エラーハンドリング強化
+2. Sentry統合
+3. EAS Build設定
+
+---
+
+## 現在のステータス
+- **進行中**: 第4段階 - Convex統合とリアルデータ
+- **次のタスク**: ConvexデータとUI統合、Clerk認証確認と調整
