@@ -1,5 +1,6 @@
 import { api } from "@/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
+import * as Haptics from "expo-haptics";
 import React, { useMemo, useState } from "react";
 import {
   Alert,
@@ -177,7 +178,8 @@ export default function HomeScreen() {
     );
 
     if (sameDateLinks.length > 1) {
-      // 複数のカードがある場合のみ手札展開
+      // 複数のカードがある場合のみ振動とカルーセル展開
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setFanExpandedLinks(sameDateLinks);
       setShowFanExpanded(true);
     }
