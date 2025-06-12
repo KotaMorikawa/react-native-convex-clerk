@@ -256,7 +256,7 @@ function CarouselCard({
       <Animated.View style={[styles.cardContainer, cardBackgroundStyle]}>
         <TouchableOpacity onPress={handleCardPress} style={styles.cardTouchable}>
           <View style={styles.cardContent}>
-            <View style={styles.header}>
+            <View style={styles.cardHeader}>
               <View style={styles.textContent}>
                 <Animated.Text 
                   style={[
@@ -344,16 +344,19 @@ export default function RotatingCarousel({
 
   useEffect(() => {
     if (visible) {
-      // 展開アニメーション
+      // 状態を即座に初期化（アニメーションなし）
+      setCurrentIndex(0);
+      scrollY.value = 0; // 即座にリセットして表示時の不整合を防ぐ
+      
+      // その他の要素は通常通りアニメーション
       backdropOpacity.value = withSpring(1, { damping: 20, stiffness: 150 });
       cardsScale.value = withSpring(1, { damping: 15, stiffness: 100 });
       cardsTranslateY.value = withSpring(0, { damping: 20, stiffness: 120 });
-      // 最新のカード（0番目）から開始
-      scrollY.value = withSpring(0, {
-        damping: 120, // より高いダンピングでゆっくりに
-        stiffness: 12, // より低いスティフネスでゆっくりに
-      });
     } else {
+      // 非表示時も状態をリセット（次回表示時の一貫性確保）
+      setCurrentIndex(0);
+      scrollY.value = 0;
+      
       // 収束アニメーション
       backdropOpacity.value = withSpring(0, { damping: 20, stiffness: 150 });
       cardsScale.value = withSpring(0, { damping: 15, stiffness: 100 });
@@ -362,7 +365,9 @@ export default function RotatingCarousel({
         stiffness: 120,
       });
     }
-  }, [visible, links.length, backdropOpacity, cardsScale, cardsTranslateY, scrollY]);
+    // scrollYはSharedValueなので依存配列に含める必要がない
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, links.length, backdropOpacity, cardsScale, cardsTranslateY]);
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
@@ -420,9 +425,9 @@ export default function RotatingCarousel({
         stiffness: 12, // より低いスティフネスでゆっくりに
       });
 
-      // 最終位置に到達時も振動（重複を避けるため異なるインデックスの場合のみ）
+      // 最終位置のインデックスを確実に同期
+      runOnJS(setCurrentIndex)(clampedIndex);
       if (clampedIndex !== currentIndex) {
-        runOnJS(setCurrentIndex)(clampedIndex);
         runOnJS(triggerHapticFeedback)();
       }
     });
@@ -617,7 +622,7 @@ const styles = StyleSheet.create({
     height: 160,
     justifyContent: "space-between",
   },
-  header: {
+  cardHeader: {
     flexDirection: "row",
     marginBottom: 12,
   },
