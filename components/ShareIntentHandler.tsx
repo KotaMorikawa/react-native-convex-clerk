@@ -2,11 +2,11 @@ import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useShareIntent } from "expo-share-intent";
 import { useCallback, useEffect } from "react";
-import { Alert } from "react-native";
 
 export default function ShareIntentHandler() {
-  const { hasShareIntent, shareIntent, resetShareIntent, error } = useShareIntent();
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
   const saveLinkWithMetadataMutation = useMutation(api.links.saveLinkWithMetadata);
+
 
   const handleShareIntent = useCallback(async () => {
     if (!shareIntent) return;
@@ -15,24 +15,17 @@ export default function ShareIntentHandler() {
       let url = "";
       let originalApp = "Shared";
 
-      // shareIntentオブジェクトの安全な処理
-      const safeShareIntent = {
-        webUrl: shareIntent.webUrl || "",
-        text: shareIntent.text || "",
-      };
-
       // URLの抽出
-      if (safeShareIntent.webUrl) {
-        url = String(safeShareIntent.webUrl);
-      } else if (safeShareIntent.text) {
+      if (shareIntent.webUrl) {
+        url = String(shareIntent.webUrl);
+      } else if (shareIntent.text) {
         // テキストからURLを抽出
-        const textStr = String(safeShareIntent.text);
+        const textStr = String(shareIntent.text);
         const urlMatch = textStr.match(/(https?:\/\/[^\s]+)/);
         if (urlMatch) {
           url = urlMatch[0];
         } else {
-          Alert.alert("エラー", "有効なURLが見つかりませんでした");
-          return;
+          return; // 有効なURLなし
         }
       }
 
@@ -42,38 +35,20 @@ export default function ShareIntentHandler() {
           originalApp,
         });
 
-        Alert.alert("保存完了", "記事を保存しました！");
+        // 保存完了
       }
-    } catch (error) {
-      console.error("Share intent error:", error);
-      // JSON parse errorを避けるために詳細なエラー情報は避ける
-      Alert.alert("エラー", "記事の保存に失敗しました");
+    } catch {
+      // 保存失敗時の処理（必要に応じてユーザーに通知）
     } finally {
       resetShareIntent();
     }
   }, [shareIntent, saveLinkWithMetadataMutation, resetShareIntent]);
 
   useEffect(() => {
-    if (hasShareIntent && shareIntent) {
-      // shareIntentがundefinedや無効なJSONでないことを確認
-      try {
-        if (typeof shareIntent === 'object' && shareIntent !== null) {
-          handleShareIntent();
-        }
-      } catch (error) {
-        console.error("Share intent validation error:", error);
-        resetShareIntent();
-      }
+    if (hasShareIntent && shareIntent && typeof shareIntent === 'object') {
+      handleShareIntent();
     }
-  }, [hasShareIntent, shareIntent, handleShareIntent, resetShareIntent]);
-
-  // エラーハンドリング
-  useEffect(() => {
-    if (error) {
-      console.error("Share intent error:", error);
-      Alert.alert("エラー", "共有の処理中にエラーが発生しました");
-    }
-  }, [error]);
+  }, [hasShareIntent, shareIntent, handleShareIntent]);
 
   return null; // UIは表示しない
 }

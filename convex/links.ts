@@ -284,7 +284,6 @@ export const getUserLinks = query({
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
-      console.log("No identity found, returning empty array");
       return [];
     }
 
