@@ -8,26 +8,11 @@ export default function ShareIntentHandler() {
   const { hasShareIntent, shareIntent, resetShareIntent, error } = useShareIntent();
   const saveLinkWithMetadataMutation = useMutation(api.links.saveLinkWithMetadata);
 
-  useEffect(() => {
-    if (hasShareIntent && shareIntent) {
-      // shareIntentがundefinedや無効なJSONでないことを確認
-      try {
-        if (typeof shareIntent === 'object' && shareIntent !== null) {
-          handleShareIntent();
-        }
-      } catch (error) {
-        console.error("Share intent validation error:", error);
-        resetShareIntent();
-      }
-    }
-  }, [hasShareIntent, shareIntent, handleShareIntent, resetShareIntent]);
-
   const handleShareIntent = useCallback(async () => {
     if (!shareIntent) return;
 
     try {
       let url = "";
-      let title = "";
       let originalApp = "Shared";
 
       // shareIntentオブジェクトの安全な処理
@@ -39,15 +24,12 @@ export default function ShareIntentHandler() {
       // URLの抽出
       if (safeShareIntent.webUrl) {
         url = String(safeShareIntent.webUrl);
-        title = String(safeShareIntent.text) || "共有された記事";
       } else if (safeShareIntent.text) {
         // テキストからURLを抽出
         const textStr = String(safeShareIntent.text);
         const urlMatch = textStr.match(/(https?:\/\/[^\s]+)/);
         if (urlMatch) {
           url = urlMatch[0];
-          // URLの前後のテキストをタイトルとして使用
-          title = textStr.replace(url, "").trim() || "共有された記事";
         } else {
           Alert.alert("エラー", "有効なURLが見つかりませんでした");
           return;
@@ -70,6 +52,20 @@ export default function ShareIntentHandler() {
       resetShareIntent();
     }
   }, [shareIntent, saveLinkWithMetadataMutation, resetShareIntent]);
+
+  useEffect(() => {
+    if (hasShareIntent && shareIntent) {
+      // shareIntentがundefinedや無効なJSONでないことを確認
+      try {
+        if (typeof shareIntent === 'object' && shareIntent !== null) {
+          handleShareIntent();
+        }
+      } catch (error) {
+        console.error("Share intent validation error:", error);
+        resetShareIntent();
+      }
+    }
+  }, [hasShareIntent, shareIntent, handleShareIntent, resetShareIntent]);
 
   // エラーハンドリング
   useEffect(() => {

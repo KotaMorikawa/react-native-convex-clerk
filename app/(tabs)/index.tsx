@@ -35,7 +35,6 @@ export default function HomeScreen() {
 
   // Convexからユーザーのリンクデータを取得
   const linksData = useQuery(api.links.getUserLinks);
-  const saveLinkMutation = useMutation(api.links.saveLink);
   const saveLinkWithMetadataMutation = useMutation(api.links.saveLinkWithMetadata);
   const toggleReadStatusMutation = useMutation(api.links.toggleReadStatus);
   const deleteLinkMutation = useMutation(api.links.deleteLink);
@@ -186,25 +185,6 @@ export default function HomeScreen() {
     // 単独カードの場合は何もしない
   };
 
-  const toggleReadStatus = async (id: string) => {
-    try {
-      await toggleReadStatusMutation({ linkId: id as any });
-    } catch (error) {
-      console.error("Failed to toggle read status:", error);
-      const appError = parseError(error);
-      showErrorAlert(appError, "ステータス更新エラー");
-    }
-  };
-
-  const deleteLink = async (id: string) => {
-    try {
-      await deleteLinkMutation({ linkId: id as any });
-    } catch (error) {
-      console.error("Failed to delete link:", error);
-      const appError = parseError(error);
-      showErrorAlert(appError, "削除エラー");
-    }
-  };
 
   const handleAddLink = async (url: string) => {
     // URLの妥当性チェック
