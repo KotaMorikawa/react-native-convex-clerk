@@ -151,20 +151,6 @@ function CarouselCard({
       "rgba(255, 255, 255, 0.7)",
     ]);
 
-    // 選択中のカードには青い境界線、それ以外は薄いグレー
-    const borderColor = interpolateColor(scrollY.value, inputRange, [
-      "rgba(224, 224, 224, 0.3)",
-      "#007AFF", // 選択中は青い境界線
-      "rgba(224, 224, 224, 0.3)",
-    ]);
-
-    // 選択中のカードの境界線を太くする
-    const borderWidth = interpolate(
-      scrollY.value,
-      inputRange,
-      [1, 3, 1], // 選択中は3px、その他は1px
-      "clamp"
-    );
 
     const shadowOpacity = interpolate(
       scrollY.value,
@@ -175,8 +161,6 @@ function CarouselCard({
 
     return {
       backgroundColor,
-      borderColor,
-      borderWidth,
       shadowOpacity,
     };
   });
@@ -503,28 +487,6 @@ export default function RotatingCarousel({
                 ))}
               </TouchableOpacity>
 
-              {/* インジケーター */}
-              <TouchableOpacity 
-                style={styles.indicators}
-                onPress={(e) => e.stopPropagation()}
-                activeOpacity={1}
-              >
-                {links.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.indicator,
-                      {
-                        backgroundColor:
-                          index === currentIndex
-                            ? "rgba(255, 255, 255, 0.9)"
-                            : "rgba(255, 255, 255, 0.3)",
-                        height: index === currentIndex ? 20 : 8,
-                      },
-                    ]}
-                  />
-                ))}
-              </TouchableOpacity>
 
               {/* フッター */}
               <TouchableOpacity 
@@ -682,19 +644,6 @@ const styles = StyleSheet.create({
   },
   cardTouchable: {
     width: "100%",
-  },
-  indicators: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 32,
-    width: 20,
-  },
-  indicator: {
-    width: 8,
-    borderRadius: 4,
-    marginVertical: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   footer: {
     flexDirection: "row",
