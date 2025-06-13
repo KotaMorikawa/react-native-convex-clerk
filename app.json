@@ -7,6 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "miniappdemo",
     "userInterfaceStyle": "automatic",
+    "linking": {
+      "scheme": "miniappdemo",
+      "prefixes": ["miniappdemo://"]
+    },
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
