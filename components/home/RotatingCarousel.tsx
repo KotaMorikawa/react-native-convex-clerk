@@ -1,10 +1,11 @@
 import { SavedLink } from "@/types";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import { X } from "lucide-react-native";
+import { Image, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
+  Image as RNImage,
   Modal,
   StatusBar,
   StyleSheet,
@@ -241,6 +242,19 @@ function CarouselCard({
         <TouchableOpacity onPress={handleCardPress} style={styles.cardTouchable}>
           <View style={styles.cardContent}>
             <View style={styles.cardHeader}>
+              {/* サムネイル画像 */}
+              {link.thumbnail ? (
+                <RNImage 
+                  source={{ uri: link.thumbnail }}
+                  style={styles.cardThumbnail}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.cardThumbnail, styles.cardThumbnailPlaceholder]}>
+                  <Image size={16} color="#8E8E93" />
+                </View>
+              )}
+              
               <View style={styles.textContent}>
                 <Animated.Text 
                   style={[
@@ -251,6 +265,20 @@ function CarouselCard({
                 >
                   {link.title || link.url}
                 </Animated.Text>
+                
+                {/* 説明文 */}
+                {link.description && (
+                  <Animated.Text 
+                    style={[
+                      styles.cardDescription,
+                      sourceColorStyle
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {link.description}
+                  </Animated.Text>
+                )}
+                
                 <View style={styles.metadata}>
                   {/* 読書時間 */}
                   {link.readingTime && (
@@ -636,6 +664,24 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
     lineHeight: 24,
     marginBottom: 8,
+  },
+  cardThumbnail: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#F2F2F7",
+    marginRight: 12,
+  },
+  cardThumbnailPlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardDescription: {
+    fontSize: 12,
+    color: "#8E8E93",
+    lineHeight: 16,
+    marginTop: 2,
+    marginBottom: 4,
   },
   cardSource: {
     fontSize: 14,

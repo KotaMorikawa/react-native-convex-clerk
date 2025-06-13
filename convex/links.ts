@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 export const saveLink = mutation({
   args: {
@@ -79,6 +80,7 @@ export const saveLinkWithMetadata = mutation({
   args: {
     url: v.string(),
     originalApp: v.optional(v.string()),
+    fetchPreview: v.optional(v.boolean()), // Link Preview取得フラグ
   },
   handler: async (ctx, args): Promise<Id<"links">> => {
     const identity = await ctx.auth.getUserIdentity();
@@ -111,6 +113,8 @@ export const saveLinkWithMetadata = mutation({
       )
       .unique();
 
+    let linkId: Id<"links">;
+
     if (existingLink) {
       // 既存のリンクを更新
       const updateData: any = { updatedAt: now };
@@ -120,7 +124,7 @@ export const saveLinkWithMetadata = mutation({
       if (estimatedReadingTime) updateData.readingTime = estimatedReadingTime;
       
       await ctx.db.patch(existingLink._id, updateData);
-      return existingLink._id;
+      linkId = existingLink._id;
     } else {
       // 新しいリンクを作成
       const insertData: any = {
@@ -136,9 +140,18 @@ export const saveLinkWithMetadata = mutation({
       if (args.originalApp) insertData.originalApp = args.originalApp;
       if (sharedFrom) insertData.sharedFrom = sharedFrom;
 
-      const linkId = await ctx.db.insert("links", insertData);
-      return linkId;
+      linkId = await ctx.db.insert("links", insertData);
     }
+
+    // Link Preview取得をスケジュール（非同期）
+    if (args.fetchPreview !== false) { // デフォルトはtrue
+      await ctx.scheduler.runAfter(0, internal.linkPreview.fetchLinkPreviewInternal, {
+        url: args.url,
+        linkId: linkId
+      });
+    }
+
+    return linkId;
   },
 });
 
@@ -433,6 +446,33 @@ export const clearAllData = mutation({
 });
 
 // 初期データを投入するための関数
+// 汎用的なリンクパッチ関数
+export const patchLink = mutation({
+  args: { 
+    linkId: v.id("links"), 
+    updateData: v.any() 
+  },
+  handler: async (ctx, { linkId, updateData }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("認証が必要です");
+    }
+
+    const link = await ctx.db.get(linkId);
+    if (!link) {
+      throw new Error("リンクが見つかりません");
+    }
+
+    // リンクの所有者確認
+    if (link.userId !== identity.subject) {
+      throw new Error("このリンクを変更する権限がありません");
+    }
+
+    await ctx.db.patch(linkId, updateData);
+    return linkId;
+  },
+});
+
 export const seedData = mutation({
   args: {
     userId: v.string(),

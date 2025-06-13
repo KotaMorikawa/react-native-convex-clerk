@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as linkPreview from "../linkPreview.js";
 import type * as links from "../links.js";
 import type * as users from "../users.js";
 
@@ -25,6 +26,7 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  linkPreview: typeof linkPreview;
   links: typeof links;
   users: typeof users;
 }>;
