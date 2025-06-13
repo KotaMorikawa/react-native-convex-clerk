@@ -87,3 +87,38 @@ Two main tables:
 - 🚧 Share extension for saving from other apps
 - 🚧 Link metadata extraction
 - 🚧 AI-powered summaries
+
+## Development Workflow Rules
+
+### Pull Request Creation Process
+
+When asked to create and merge a PR, **ALWAYS** follow this exact sequence:
+
+1. **Create a new branch**:
+   ```bash
+   git checkout -b <branch-name>
+   ```
+
+2. **Make changes and commit appropriately**:
+   - Group related changes into logical commits
+   - Use descriptive commit messages
+   - Include the standard footer:
+     ```
+     🤖 Generated with [Claude Code](https://claude.ai/code)
+     
+     Co-Authored-By: Claude <noreply@anthropic.com>
+     ```
+
+3. **Push branch and create PR**:
+   ```bash
+   git push -u origin <branch-name>
+   gh pr create --title "..." --body "..."
+   ```
+
+4. **Merge PR and clean up**:
+   ```bash
+   gh pr merge --squash --delete-branch
+   git checkout main && git pull
+   ```
+
+**NEVER** commit directly to main branch. Always use feature branches and PRs, even for small changes.
