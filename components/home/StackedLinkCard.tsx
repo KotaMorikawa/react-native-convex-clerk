@@ -1,7 +1,7 @@
 import { SavedLink } from "@/types";
-import { Clock, ExternalLink } from "lucide-react-native";
+import { Clock, ExternalLink, Image } from "lucide-react-native";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image as RNImage, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated from "react-native-reanimated";
 
 interface StackedLinkCardProps {
@@ -49,6 +49,19 @@ export default function StackedLinkCard({
       >
         <View style={styles.content}>
           <View style={styles.header}>
+            {/* サムネイル画像 */}
+            {link.thumbnail ? (
+              <RNImage 
+                source={{ uri: link.thumbnail }}
+                style={styles.thumbnail}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+                <Image size={20} color="#8E8E93" />
+              </View>
+            )}
+            
             <View style={styles.textContent}>
               <Text
                 style={[styles.title, link.isRead && styles.readTitle]}
@@ -56,6 +69,17 @@ export default function StackedLinkCard({
               >
                 {link.title || link.url}
               </Text>
+              
+              {/* 説明文 */}
+              {link.description && (
+                <Text 
+                  style={[styles.description, link.isRead && styles.readDescription]}
+                  numberOfLines={2}
+                >
+                  {link.description}
+                </Text>
+              )}
+              
               <View style={styles.metadata}>
                 {/* 読書時間 */}
                 {link.readingTime && (
@@ -131,11 +155,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   thumbnail: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: 60,
+    height: 60,
+    borderRadius: 12,
     backgroundColor: "#F2F2F7",
     marginRight: 12,
+  },
+  thumbnailPlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   textContent: {
     flex: 1,
@@ -149,6 +177,16 @@ const styles = StyleSheet.create({
   },
   readTitle: {
     color: "#8E8E93",
+  },
+  description: {
+    fontSize: 13,
+    color: "#6D6D70",
+    lineHeight: 18,
+    marginBottom: 6,
+    marginTop: 2,
+  },
+  readDescription: {
+    color: "#A0A0A0",
   },
   source: {
     fontSize: 13,
