@@ -1,5 +1,6 @@
 import { SavedLink } from "@/types";
-import React, { useEffect, useMemo } from "react";
+import * as Haptics from "expo-haptics";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
   runOnJS,
@@ -41,8 +42,41 @@ function AnimatedCard({
 }) {
   const translateY = useSharedValue(-screenHeight);
 
+  // カード降下時の振動シーケンス
+  const triggerDropVibrationSequence = useCallback(() => {
+    // 最初の数枚のカードのみ振動（パフォーマンス最適化）
+    if (stackIndex > 4) return;
+    
+    // 降下開始振動（非常に軽い）
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // 降下中の振動（重力加速感） - より細かく
+    setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 120);
+    
+    setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 240);
+    
+    setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 360);
+    
+    // 着地振動（インパクト） - より早いタイミング
+    setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }, 450);
+  }, [stackIndex]);
+
   useEffect(() => {
     const delay = stackIndex * 150;
+    
+    // 振動を遅延実行（アニメーション開始と同期）
+    setTimeout(() => {
+      triggerDropVibrationSequence();
+    }, delay);
+    
     translateY.value = withDelay(
       delay,
       withSpring(0, {
@@ -51,7 +85,7 @@ function AnimatedCard({
         mass: 1,
       })
     );
-  }, [stackIndex, translateY]);
+  }, [stackIndex, translateY, triggerDropVibrationSequence]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -59,6 +93,9 @@ function AnimatedCard({
 
   const handlePress = () => {
     if (!link.isRead) {
+      // タップ時の軽い振動（カード移動開始）
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
       translateY.value = withSpring(
         screenHeight,
         {
@@ -66,7 +103,11 @@ function AnimatedCard({
           stiffness: 150,
         },
         () => {
-          runOnJS(onPress)();
+          // 移動完了時の軽い振動
+          runOnJS(() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onPress();
+          })();
         }
       );
     } else {
